@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 class Solution {
     public int reverse(int x) {
     /* 排除-2147483648的结果之后取数字的绝对值，flag表示正负
@@ -39,7 +41,7 @@ class Solution {
         }
         return maxAns;
     }//  leet_code #343(2020.7.30 daily)
-    public int findMagicIndex(int[] nums) {
+    public int findMagicIndex(@NotNull int[] nums) {
         /*使用跳跃索引，在顺序搜索的基础上节省了时间*/
         for(int i=0;i < nums.length;){
             if (nums[i] == i) return i;
@@ -59,15 +61,61 @@ class Solution {
         }
         return dp[n];
     } //  leet_code #96
+    public int largest1BorderedSquare(@NotNull int[][] grid) {
+        /*dp练习，我的解法偏死算，可以参考Ripple的思路，Ripple的思路附在本题下面*/
+        int length = grid.length;
+        int width = grid[0].length;
+        int elementLength = 0;
+        int countLength;
+        for (int col = 0; col < width; col++){
+            for (int row = 0; row < length; row++){
+                if (grid[row][col]==0) continue;
+                countLength = Math.min(length-row, width-col);
+                if (countLength < elementLength) continue;
+                for (int i = countLength; i >= 1; i--){
+                    boolean flag=true;
+                    for (int j=0; j < i; j++){
+                        if (grid[row+j][col]==0||grid[row][col+j]==0||grid[row+i-1-j][col+i-1]==0||
+                                grid[row+i-1][col+i-1-j]==0){
+                            flag=false;
+                            break;
+                        }
+                    }
+                    if (flag) elementLength=Math.max(elementLength, i);
+                }
+            }
+        }
+        return elementLength*elementLength;
+    } //  leet_code #1139
+    public int largest1BorderedSquare1(@NotNull int[][] grid) {
+        /*Ripple的解法，使用dp思想*/
+        int m = grid.length, n = grid[0].length;
+        int[][][] dp = new int[m+1][n+1][2];
+        // 0 up 1 left;
+        int ans = 0;
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (grid[i-1][j-1] == 0) continue; // 如果是0则不要继续了
+                dp[i][j][0] = dp[i-1][j][0] + 1; // 求出up情况下连续的个数
+                dp[i][j][1] = dp[i][j-1][1] + 1; // 求出left情况下连续的个数
+                int min = Math.min(dp[i][j][0], dp[i][j][1]); // 拿出两者较小的长度，因为四条边都要相等。
+                for (int k = 0; k < min; k++) {//拿出后并不一定就是min这个长度，有可能另外两条边比较短，没有min长，所以要一个一个判断。
+                    // 判断另外的两条边是否都比当前长度大。
+                    if (dp[i-k][j][1] >= k + 1 && dp[i][j-k][0] >= k + 1) ans = Math.max(ans, k + 1);
+                }
+            }
+        }
+        return ans * ans;
+    } //  leet_code #1139 解法参考
 
 }
 
 public class test {
     public static void main(String[] args){
-        int n, x;
+        int n;
+        int[][] grid = {{1,1,1},{1,0,1},{1,1,1},{1,1,1}};
         Solution test = new Solution();
-        x = 10;
-        n = test.integerBreak(x);
+        n = test.largest1BorderedSquare(grid);
         System.out.println(n);
     }
 }
