@@ -1,4 +1,8 @@
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 class Solution {
     public int reverse(int x) {
@@ -25,7 +29,7 @@ class Solution {
         revNum = Integer.parseInt(revString);
         if (flag) revNum = -revNum;
         return revNum;
-    }//  leet_code #7(2020.7.29)
+    } //  leet_code #7(2020.7.29)
     public int integerBreak(int n) {
     /*按照分解份数来进行循环，分解份数最多取n/2，此时分解的结果都是2*/
         if (n == 2 || n == 3) return n-1;
@@ -40,7 +44,7 @@ class Solution {
             maxAns = Math.max(maxAns, ans);
         }
         return maxAns;
-    }//  leet_code #343(2020.7.30 daily)
+    } //  leet_code #343(2020.7.30 daily)
     public int findMagicIndex(@NotNull int[] nums) {
         /*使用跳跃索引，在顺序搜索的基础上节省了时间*/
         for(int i=0;i < nums.length;){
@@ -48,7 +52,7 @@ class Solution {
             i=Math.max(nums[i],i+1); // 如果i大就看max什么时候追上，如果数字大，因为满足递增所以中间的部分一定不会相等
         }
         return -1;
-    }//  leet_code #面试题08.03魔术索引(2020.7.31 daily)
+    } //  leet_code #面试题08.03魔术索引(2020.7.31 daily)
     public int numTrees(int n) {
         /*动态规划练习，左子树情况数乘以右子树情况数*/
         int[] dp = new int[n+1];
@@ -107,15 +111,112 @@ class Solution {
         }
         return ans * ans;
     } //  leet_code #1139 解法参考
-
+    public List<Integer> inorderTraversal(TreeNode root) {
+        /*使用栈递归解决*/
+        List<Integer> list = new ArrayList<>();
+        Stack<TreeNode> stack = new Stack<>();
+        while (root!=null || !stack.isEmpty()){
+            while(root != null){
+                stack.push(root);
+                root = root.left;
+            }
+            root = stack.pop();
+            list.add(root.val);
+            root = root.right;
+        }
+        return list;
+    } // leet_code #94
+    private boolean dfs(@NotNull char[][] board, boolean[][] row, boolean[][] col, boolean[][] block, int i, int j){
+        /*给数组打上标签，对于空格来说先递归任意填入符合条件的数字，如果之后验证下来不符合条件，再回溯回来取消相应的标签*/
+        while(board[i][j] != '.'){
+            if(++j >= 9){
+                i++;
+                j = 0;
+            }
+            if(++i >= 9){
+                return true;
+            }
+        }
+        for(int num=0; num<9; num++){
+            int blockIndex = i / 3 * 3 + j / 3;
+            if (!row[i][num] && !col[j][num] && !block[blockIndex][num]){
+                board[i][j] = (char)(num+'1');
+                row[i][num] = true;
+                col[j][num] = true;
+                block[blockIndex][num] = true;
+                if (dfs(board, row, col, block, i, j)) {
+                    return true;
+                }
+                else {
+                    row[i][num] = false;
+                    col[j][num] = false;
+                    block[blockIndex][num] = false;
+                    board[i][j] = '.';
+                }
+            }
+        }
+        return false;
+    } // leet_code #37
+    public void solveSudoku(char[][] board) {
+        /*创建3个数组分别表示行，列，每个九宫格的数字情况，i/3*3即抹去了除以3的余数*/
+        boolean[][] row = new boolean[9][9];
+        boolean[][] col = new boolean[9][9];
+        boolean[][] block = new boolean[9][9];
+        for(int i=0; i<9; i++){
+            for(int j=0; j<9; j++){
+                if(board[i][j] != '.'){
+                    int num = board[i][j] - '1';
+                    row[i][num] = true;
+                    col[j][num] = true;
+                    block[i/3*3+j/3][num] = true;
+                }
+            }
+        }
+        dfs(board, row, col, block, 0, 0);
+    } // leet_code #37
+    public TreeNode invertTree(TreeNode root) {
+        /*遍历二叉树的同时交换左右子树（采用先序遍历）*/
+        TreeNode node;
+        if (root == null) return null;
+        node = root.right;
+        root.right = invertTree(root.left);
+        root.left = invertTree(node);
+        return root;
+    } // leet_code #226
 }
 
 public class test {
+    private static void printBoard(char[][] board) {
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                System.out.print(board[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
     public static void main(String[] args){
-        int n;
-        int[][] grid = {{1,1,1},{1,0,1},{1,1,1},{1,1,1}};
-        Solution test = new Solution();
-        n = test.largest1BorderedSquare(grid);
-        System.out.println(n);
+        char[][] board = new char[][]{
+                {'5', '3', '.', '.', '7', '.', '.', '.', '.'},
+                {'6', '.', '.', '1', '9', '5', '.', '.', '.'},
+                {'.', '9', '8', '.', '.', '.', '.', '6', '.'},
+                {'8', '.', '.', '.', '6', '.', '.', '.', '3'},
+                {'4', '.', '.', '8', '.', '3', '.', '.', '1'},
+                {'7', '.', '.', '.', '2', '.', '.', '.', '6'},
+                {'.', '6', '.', '.', '.', '.', '2', '8', '.'},
+                {'.', '.', '.', '4', '1', '9', '.', '.', '5'},
+                {'.', '.', '.', '.', '8', '.', '.', '7', '9'}
+        };
+        Solution solution = new Solution();
+        test.printBoard(board);
+        solution.solveSudoku(board);
+        test.printBoard(board);
     }
 }
+
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    @Contract(pure = true)
+    TreeNode(int x) {val = x;}
+} // 树结构 leet_code #94 #226
