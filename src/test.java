@@ -1,6 +1,7 @@
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
@@ -182,34 +183,89 @@ class Solution {
         root.left = invertTree(node);
         return root;
     } // leet_code #226
+    public int[] findRedundantDirectedConnection(int[][] edges) {
+        List<Integer> father = new ArrayList<>(1000);
+        List<Integer> son = new ArrayList<>(1000);
+        List<Integer> loop = new ArrayList<>(1000);
+        int front, back, findloop;
+        boolean secondSon = false;
+        int[] ans = new int[2];
+        for (int i=0; i<edges.length; i++){
+            front = edges[i][0];
+            back = edges[i][1];
+            if (son.contains(front) && father.contains(back)){
+                if (!secondSon) ans = edges[i];
+                loop.add(front);
+                loop.add(back);
+                int j=0;
+                int jfront, jback;
+                findloop = front;
+                while (true){
+                    jfront = edges[j][0];
+                    jback = edges[j][1];
+                    if (jback == findloop){
+                        findloop = jfront;
+                        if (findloop == back){
+                            break;
+                        }
+                        else {
+                            loop.add(findloop);
+                            j = 0;
+                        }
+                    }
+                    else {
+                        j++;
+                        if (j>i) {
+                            break;
+                        } // 判断是不是没找到环
+                    }
+                } // 寻找闭环元素
+                if (j>i) {
+                    if (son.contains(back)){
+                        ans = edges[i];
+                        secondSon = true;
+                    }
+                    father.add(front);
+                    son.add(back);
+                    loop.clear();
+                    continue;
+                } // 没找到环
+                for (int k=0; k<edges.length; k++){
+                    front = edges[k][0];
+                    back = edges[k][1];
+                    if (!loop.contains(front) && loop.contains(back)) {
+                        ans = edges[k];
+                        break;
+                    }
+                }
+                for (int k=0; k<edges.length; k++){
+                    front = edges[k][0];
+                    back = edges[k][1];
+                    if (loop.contains(front) && back==ans[1]) return edges[k];
+                }
+                break;
+            }
+            else if (son.contains(back)){
+                ans = edges[i];
+                secondSon = true;
+            }
+            else{
+                father.add(front);
+                son.add(back);
+            }
+        }
+        return ans;
+    }
 }
 
 public class test {
-    private static void printBoard(char[][] board) {
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                System.out.print(board[i][j] + " ");
-            }
-            System.out.println();
-        }
-    }
     public static void main(String[] args){
-        char[][] board = new char[][]{
-                {'5', '3', '.', '.', '7', '.', '.', '.', '.'},
-                {'6', '.', '.', '1', '9', '5', '.', '.', '.'},
-                {'.', '9', '8', '.', '.', '.', '.', '6', '.'},
-                {'8', '.', '.', '.', '6', '.', '.', '.', '3'},
-                {'4', '.', '.', '8', '.', '3', '.', '.', '1'},
-                {'7', '.', '.', '.', '2', '.', '.', '.', '6'},
-                {'.', '6', '.', '.', '.', '.', '2', '8', '.'},
-                {'.', '.', '.', '4', '1', '9', '.', '.', '5'},
-                {'.', '.', '.', '.', '8', '.', '.', '7', '9'}
-        };
-        Solution solution = new Solution();
-        test.printBoard(board);
-        System.out.println("-----");
-        solution.solveSudoku(board);
-        test.printBoard(board);
+        int[] n;
+        int[][] x;
+        Solution test = new Solution();
+        x = new int[][]{{6, 3}, {8, 4}, {9, 6}, {3, 2}, {5, 10}, {10, 7}, {2, 1}, {7, 6}, {4, 5}, {1, 8}};
+        n = test.findRedundantDirectedConnection(x);
+        System.out.println(Arrays.toString(n));
     }
 }
 
