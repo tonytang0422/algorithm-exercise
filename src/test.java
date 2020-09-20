@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
+import static java.util.Collections.swap;
 
 class Solution {
     public int reverse(int x) {
@@ -174,7 +175,8 @@ class Solution {
         }
         dfs(board, row, col, block, 0, 0);
     } // leet_code #37
-    public TreeNode invertTree(TreeNode root) {
+    @Contract("null -> null")
+    private TreeNode invertTree(TreeNode root) {
         /*遍历二叉树的同时交换左右子树（采用先序遍历）*/
         TreeNode node;
         if (root == null) return null;
@@ -183,7 +185,14 @@ class Solution {
         root.left = invertTree(node);
         return root;
     } // leet_code #226
-    public int[] findRedundantDirectedConnection(int[][] edges) {
+    int[] findRedundantDirectedConnection(@NotNull int[][] edges) {
+        /*加上一个节点之后不构成树的情况有两种
+        * a.形成了环
+        * b.有一个节点存在两个父节点
+        * 只满足a的话删除环上最后一条边
+        * 只满足b的话删除后面的一条边
+        * 同时满足a和b的话删除环上指向重复子节点的边
+        */
         List<Integer> father = new ArrayList<>(1000);
         List<Integer> son = new ArrayList<>(1000);
         List<Integer> loop = new ArrayList<>(1000);
@@ -230,18 +239,18 @@ class Solution {
                     loop.clear();
                     continue;
                 } // 没找到环
-                for (int k=0; k<edges.length; k++){
-                    front = edges[k][0];
-                    back = edges[k][1];
+                for (int[] edge : edges) {
+                    front = edge[0];
+                    back = edge[1];
                     if (!loop.contains(front) && loop.contains(back)) {
-                        ans = edges[k];
+                        ans = edge;
                         break;
                     }
                 }
-                for (int k=0; k<edges.length; k++){
-                    front = edges[k][0];
-                    back = edges[k][1];
-                    if (loop.contains(front) && back==ans[1]) return edges[k];
+                for (int[] edge : edges) {
+                    front = edge[0];
+                    back = edge[1];
+                    if (loop.contains(front) && back == ans[1]) return edge;
                 }
                 break;
             }
@@ -255,17 +264,78 @@ class Solution {
             }
         }
         return ans;
-    }
+    } // leet_code #685
+    private void backtrack47(List<List<Integer>> ans, List<Integer> output, int n, int begin){
+        if (begin == n && !ans.contains(output)){
+            ans.add(new ArrayList<Integer>(output));
+        }
+        for (int i = begin; i < n; i++){
+            if (begin!=i && output.get(i).equals(output.get(begin))) continue;
+            swap(output, begin, i);
+            backtrack47(ans, output, n, begin+1);
+            swap(output, begin, i);
+        }
+    } // leet_code #47
+    List<List<Integer>> permuteUnique(@NotNull int[] nums) {
+        /*用递归的方法，先让output与输入值相同，然后依次交换各个位置与之后每个位置的值（非最优解）*/
+        List<List<Integer>> ans = new ArrayList<>();
+        List<Integer> output = new ArrayList<>();
+        for (int num : nums){
+            output.add(num);
+        }
+        int n = nums.length;
+        backtrack47(ans, output, n, 0);
+        return ans;
+    } // leet_code #47
+    private int ans404 = 0; // leet_code #404
+    private void LDR(TreeNode root){
+        if (root == null) return;
+        LDR (root.left);
+        if (root.left!=null && root.left.left==null && root.left.right==null) ans404 += root.left.val;
+        LDR (root.right);
+    } // leet_code #404
+    public int sumOfLeftLeaves(TreeNode root) {
+        /*遍历二叉树，使用全局变量的问题要如何解决需要思考一下*/
+        LDR(root);
+        return ans404;
+    } // leet_code #404
+    private void backtrack78(List<List<Integer>> ans, List<Integer> output, List<Integer> output0, int n, int i){
+        if(i == n) {
+            ans.add(new ArrayList<Integer>(output));
+            return;
+        }
+        output.add(output0.get(i));
+        backtrack78(ans, output, output0, n, i+1);
+        output.remove(output0.get(i));
+        backtrack78(ans, output, output0, n, i+1);
+    } // leet_code #78
+    public List<List<Integer>> subsets(@NotNull int[] nums) {
+        List<List<Integer>> ans = new ArrayList<>();
+        List<Integer> output = new ArrayList<>(1000);
+        List<Integer> output0 = new ArrayList<>();
+        for (int num : nums){
+            output0.add(num);
+        }
+        int n = nums.length;
+        backtrack78(ans, output, output0, n, 0);
+        return ans;
+    } // leet_code #78
 }
 
 public class test {
     public static void main(String[] args){
-        int[] n;
-        int[][] x;
+        List<List<Integer>> n;
+        int[] x;
         Solution test = new Solution();
-        x = new int[][]{{6, 3}, {8, 4}, {9, 6}, {3, 2}, {5, 10}, {10, 7}, {2, 1}, {7, 6}, {4, 5}, {1, 8}};
-        n = test.findRedundantDirectedConnection(x);
-        System.out.println(Arrays.toString(n));
+        x = new int[]{1, 1, 2};
+        n = test.permuteUnique(x);
+        System.out.print('[');
+        for (List<Integer> i : n){
+            System.out.print('[');
+            for (int j : i ) System.out.print(j + ", ");
+            System.out.println(']');
+        }
+        System.out.print(']');
     }
 }
 
@@ -275,4 +345,4 @@ class TreeNode {
     TreeNode right;
     @Contract(pure = true)
     TreeNode(int x) {val = x;}
-} // 树结构 leet_code #94 #226
+} // 二叉树结构 leet_code #94 #226 #404
